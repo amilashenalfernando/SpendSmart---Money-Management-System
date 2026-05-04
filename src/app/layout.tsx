@@ -4,8 +4,8 @@ import { Providers } from "@/components/layout/Providers";
 import { Toaster } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
-  title: "SpendSmart - Take control of your money",
-  description: "Modern, clean expense tracker to help you visualize spending and set budgets.",
+  title: "SpendSmart - Smart Financial Management",
+  description: "Experience the next generation of personal finance tracking with SpendSmart.",
 };
 
 export default function RootLayout({
@@ -14,9 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="min-h-screen font-sans antialiased text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-        
+    <html lang="en" className="light">
+      <body className="min-h-screen bg-mesh text-slate-900 selection:bg-blue-100 selection:text-blue-900">
         <Providers>
           {children}
           <Toaster />

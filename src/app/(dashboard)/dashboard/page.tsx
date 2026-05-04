@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./DashboardClient";
-import { startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { Type } from "@prisma/client";
 
 export default async function DashboardPage() {
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
 
   const netBalance = totalIncome - totalExpenses;
   
-  let topCategory = "N/A";
+  let topCategory = "";
   let maxCatAmount = 0;
   Object.entries(categoryTotals).forEach(([cat, amount]) => {
     if (amount > maxCatAmount) {
@@ -65,16 +65,29 @@ export default async function DashboardPage() {
     }
   });
 
-  // Recent 5 transactions
-  const recentTransactions = currentMonthTransactions.slice(0, 5);
+  // Recent transactions
+  const recentTransactions = currentMonthTransactions.slice(0, 10);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-          Good morning, {session.user.name?.split(' ')[0] || 'User'} 👋
-        </h1>
-        <p className="text-slate-500 mt-1">Here&apos;s what&apos;s happening with your money this month.</p>
+    <div className="p-6 md:p-10 max-w-[1500px] mx-auto w-full min-h-screen bg-slate-50/50">
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+            {getGreeting()}, <span className="text-blue-600">{session.user.name?.split(' ')[0] || 'there'}</span>
+          </h1>
+          <p className="text-slate-500 mt-3 text-lg font-medium">Your financial overview for this month.</p>
+        </div>
+        <div className="flex items-center gap-3 px-5 py-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+           <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{format(now, "EEEE, do MMMM yyyy")}</span>
+        </div>
       </div>
 
       <DashboardClient 

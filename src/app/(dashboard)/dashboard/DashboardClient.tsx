@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Transaction, Type } from "@prisma/client";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, Wallet, Plus, Edit2, Trash2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Plus, Edit2, Trash2, ArrowRight, PieChart, Landmark } from "lucide-react";
 import { MonthlyBarChart } from "@/components/charts/MonthlyBarChart";
 import { Modal } from "@/components/ui/Modal";
 import { TransactionForm } from "@/components/forms/TransactionForm";
@@ -34,6 +34,10 @@ export function DashboardClient({ stats, recentTransactions, chartTransactions }
   const router = useRouter();
   const { formatAmount } = useCurrency();
 
+  const savingsRate = stats.totalIncome > 0 
+    ? Math.round((stats.netBalance / stats.totalIncome) * 100) 
+    : 0;
+
   const handleSuccess = () => {
     setIsModalOpen(false);
     setEditingTransaction(null);
@@ -56,114 +60,163 @@ export function DashboardClient({ stats, recentTransactions, chartTransactions }
   };
 
   return (
-    <>
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Income" amount={stats.totalIncome} icon={TrendingUp} colorClass="text-green-600 bg-green-100" />
-        <StatCard title="Total Expenses" amount={stats.totalExpenses} icon={TrendingDown} colorClass="text-red-500 bg-red-100" />
-        <StatCard
-          title="Net Balance"
-          amount={stats.netBalance}
-          icon={Wallet}
-          colorClass={stats.netBalance >= 0 ? "text-primary-600 bg-primary-100" : "text-red-500 bg-red-100"}
-        />
-
-        {/* Top category card */}
-        <div className="glass-card p-6 flex flex-col justify-between">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 rounded-full text-blue-600 bg-blue-100 flex items-center justify-center w-12 h-12 text-xl">
-              {stats.topCategory ? CATEGORY_ICONS[stats.topCategory] || "📦" : "➖"}
+    <div className="space-y-8">
+      {/* Top Banner / Total Balance */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-slate-900 p-8 md:p-10 text-white shadow-2xl">
+        <div className="absolute top-0 right-0 p-32 bg-blue-600/20 rounded-full blur-[120px] -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 p-24 bg-indigo-600/10 rounded-full blur-[100px] -ml-20 -mb-20"></div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div>
+            <p className="text-blue-400 font-bold uppercase tracking-widest text-[10px] mb-2">Available Balance</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
+              {formatAmount(stats.netBalance)}
+            </h1>
+            <div className="flex items-center gap-4 text-slate-400">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <span className="text-xs font-medium text-slate-200">System Healthy</span>
+              </div>
+              <p className="text-xs font-medium">Updated just now</p>
             </div>
-            <h3 className="text-sm font-medium text-slate-500">Top Category</h3>
           </div>
-          <span className="text-3xl font-bold text-slate-900 capitalize tracking-tight truncate" title={stats.topCategory || "None"}>
-            {stats.topCategory ? stats.topCategory.toLowerCase() : "None"}
-          </span>
+          
+          <div className="flex flex-col gap-4 w-full md:w-auto">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20 active:scale-95 text-sm"
+            >
+              <Plus size={18} strokeWidth={3} /> Add Transaction
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Primary Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="glass-card p-6 group">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 group-hover:scale-110 transition-transform duration-500">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Income</p>
+              <h3 className="text-xl font-bold text-slate-900">{formatAmount(stats.totalIncome)}</h3>
+            </div>
+          </div>
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+             <div className="h-full bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 group">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform duration-500">
+              <TrendingDown size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Expenses</p>
+              <h3 className="text-xl font-bold text-slate-900">{formatAmount(stats.totalExpenses)}</h3>
+            </div>
+          </div>
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+             <div 
+                className="h-full bg-red-500 rounded-full" 
+                style={{ width: `${stats.totalIncome > 0 ? (stats.totalExpenses / stats.totalIncome) * 100 : 0}%` }}
+             ></div>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 group">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:scale-110 transition-transform duration-500">
+              <Landmark size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Remaining (Savings)</p>
+              <h3 className="text-xl font-bold text-slate-900">{formatAmount(stats.netBalance)}</h3>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400">{savingsRate}% of Income</p>
+            <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
+               <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${savingsRate}%` }}></div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Charts + Recent transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 glass-card p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-6">Income vs Expenses (6 Months)</h2>
-          <MonthlyBarChart transactions={chartTransactions} />
+        <div className="lg:col-span-2 glass-card p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Financial Overview</h2>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Income
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-50 border border-red-100 text-[10px] font-bold text-red-600 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> Expenses
+              </div>
+            </div>
+          </div>
+          <div className="h-[280px]">
+            <MonthlyBarChart transactions={chartTransactions} />
+          </div>
         </div>
 
         <div className="glass-card p-6 flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Transactions</h2>
+            <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
             <button
               onClick={() => router.push("/transactions")}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+              className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:text-blue-600 transition-all active:scale-90"
             >
-              View All
+              <ArrowRight size={20} />
             </button>
           </div>
 
-          {recentTransactions.length > 0 ? (
-            <div className="space-y-1 flex-1">
-              {recentTransactions.map((t) => (
-                <div key={t.id} className="group flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg shrink-0">
-                      {CATEGORY_ICONS[t.category] || "📦"}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm text-slate-900 truncate">{t.title}</p>
-                      <p className="text-xs text-slate-400">{format(new Date(t.date), "MMM d, yyyy")}</p>
-                    </div>
+          <div className="flex-1 space-y-3">
+            {recentTransactions.slice(0, 6).map((t) => (
+              <div key={t.id} className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-50 hover:border-blue-100 hover:shadow-xl hover:shadow-blue-500/5 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+                    {CATEGORY_ICONS[t.category] || "📦"}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-2">
-                    <span className={cn(
-                      "font-semibold text-sm",
-                      t.type === Type.INCOME ? "text-green-600" : "text-slate-800"
-                    )}>
-                      {t.type === Type.INCOME ? "+" : "-"}{formatAmount(t.amount)}
-                    </span>
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                      <button
-                        onClick={() => { setEditingTransaction(t); setIsModalOpen(true); }}
-                        className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
-                        title="Edit"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-slate-900 truncate">{t.title}</p>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{format(new Date(t.date), "MMM d")}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-400">
-              <div className="w-16 h-16 mb-4 bg-slate-100 rounded-full flex items-center justify-center text-2xl">
-                📝
+                <div className="text-right ml-4">
+                  <p className={cn(
+                    "font-bold text-sm",
+                    t.type === Type.INCOME ? "text-blue-600" : "text-slate-900"
+                  )}>
+                    {t.type === Type.INCOME ? "+" : "-"}{formatAmount(t.amount)}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm font-medium text-slate-500">No recent transactions</p>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="mt-2 text-primary-600 hover:text-primary-700 text-sm font-medium transition-colors"
-              >
-                Add your first one
-              </button>
-            </div>
-          )}
+            ))}
+            
+            {recentTransactions.length === 0 && (
+               <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl mb-4 opacity-50">
+                    📉
+                  </div>
+                  <p className="text-slate-400 font-bold text-sm">No activity yet</p>
+               </div>
+            )}
+          </div>
+
+          <button
+             onClick={() => setIsModalOpen(true)}
+             className="mt-8 w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 group"
+          >
+             <Plus size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-300" /> New Transaction
+          </button>
         </div>
       </div>
-
-      {/* FAB */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 z-40 w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center hover:scale-105 transition-all duration-200"
-      >
-        <Plus size={24} />
-      </button>
 
       <Modal
         isOpen={isModalOpen}
@@ -176,23 +229,6 @@ export function DashboardClient({ stats, recentTransactions, chartTransactions }
           onCancel={() => { setIsModalOpen(false); setEditingTransaction(null); }}
         />
       </Modal>
-    </>
-  );
-}
-
-function StatCard({ title, amount, icon: Icon, colorClass }: { title: string; amount: number; icon: React.ElementType; colorClass: string }) {
-  const { formatAmount } = useCurrency();
-  return (
-    <div className="glass-card p-6 flex flex-col justify-between">
-      <div className="flex items-center gap-4 mb-4">
-        <div className={cn("p-3 rounded-full w-12 h-12 flex items-center justify-center", colorClass)}>
-          <Icon size={22} />
-        </div>
-        <h3 className="text-sm font-medium text-slate-500">{title}</h3>
-      </div>
-      <p className="text-3xl font-bold text-slate-900 tracking-tight truncate" title={formatAmount(amount)}>
-        {formatAmount(amount)}
-      </p>
     </div>
   );
 }

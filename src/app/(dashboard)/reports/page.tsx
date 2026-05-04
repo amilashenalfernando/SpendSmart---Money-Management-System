@@ -7,6 +7,9 @@ import { CategoryPieChart } from "@/components/charts/CategoryPieChart";
 import { SpendingLineChart } from "@/components/charts/SpendingLineChart";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { MonthSelector } from "@/components/ui/MonthSelector";
+import { DownloadReportButton } from "@/components/reports/DownloadReportButton";
+import { PDFReportTemplate } from "@/components/reports/PDFReportTemplate";
+import { Wallet } from "lucide-react";
 
 export default async function ReportsPage({
   searchParams,
@@ -50,6 +53,8 @@ export default async function ReportsPage({
     },
   });
 
+  const reportTitle = `Financial_Report_${format(targetDate, "MMM_yyyy")}`;
+
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -60,10 +65,12 @@ export default async function ReportsPage({
         
         <div className="flex items-center gap-3">
           <MonthSelector defaultMonth={format(targetDate, "yyyy-MM")} />
+          <DownloadReportButton reportName={reportTitle} targetId="pdf-report-template" />
         </div>
       </div>
 
-      <div className="space-y-8">
+      {/* The actual UI content */}
+      <div className="space-y-8 bg-transparent transition-all">
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Income vs Expenses</h2>
@@ -96,6 +103,13 @@ export default async function ReportsPage({
           </div>
         </div>
       </div>
+
+      {/* Professional PDF Template (Hidden from UI) */}
+      <PDFReportTemplate 
+        user={session.user} 
+        targetDate={targetDate} 
+        currentMonthTransactions={currentMonthTransactions} 
+      />
     </div>
   );
 }
